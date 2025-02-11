@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DLBCL RNA-seq Analysis Project</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        h1, h2, h3 {
+            color: #2c3e50;
+            margin-top: 1.5em;
+            margin-bottom: 0.8em;
+        }
+        
+        h1 {
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        
+        .figure {
+            margin: 2em 0;
+            text-align: center;
+        }
+        
+        .figure img {
+            max-width: 100%;
+            height: auto;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .figure-caption {
+            margin-top: 1em;
+            font-style: italic;
+            color: #666;
+        }
+        
+        code {
+            background-color: #f8f9fa;
+            padding: 2px 4px;
+            border-radius: 4px;
+            color: #e83e8c;
+        }
+        
+        .key-finding {
+            background-color: #f8f9fa;
+            border-left: 4px solid #3498db;
+            padding: 1em;
+            margin: 1em 0;
+        }
+        
+        @media print {
+            body {
+                max-width: none;
+                padding: 1cm;
+            }
+            
+            .figure {
+                break-inside: avoid;
+            }
+            
+            a {
+                text-decoration: none;
+                color: #333;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Diffuse Large B-Cell Lymphoma (DLBCL) Survival Analysis</h1>
+    
+    <section id="introduction">
+        <h2>Project Overview</h2>
+        <p>This analysis investigates gene expression patterns associated with survival outcomes in DLBCL patients using RNA-seq data from the TCGA-DLBC project. The goal is to identify potential molecular markers and pathways that might influence patient survival, with implications for prognosis and therapeutic intervention.</p>
+        
+        <div class="key-finding">
+            <strong>Dataset Overview:</strong>
+            <ul>
+                <li>48 DLBCL patient samples</li>
+                <li>44,176 genes analyzed</li>
+                <li>39 surviving patients vs. 9 deceased</li>
+            </ul>
+        </div>
+    </section>
+
+    <section id="methods">
+        <h2>Methods</h2>
+        <h3>Data Processing and Analysis Pipeline</h3>
+        <p>The analysis was conducted using R/Bioconductor, with the following key steps:</p>
+        <ol>
+            <li>Data acquisition from TCGA-DLBC project</li>
+            <li>Quality control and preprocessing using DESeq2</li>
+            <li>Differential expression analysis comparing survival outcomes</li>
+            <li>Pathway enrichment analysis using Gene Ontology</li>
+            <li>Visualization of results using ggplot2 and related packages</li>
+        </ol>
+    </section>
+
+    <section id="results">
+        <h2>Results</h2>
+        
+        <h3>1. Global Expression Changes</h3>
+        <div class="figure">
+            <img src="results/figures/ma_plot.png" alt="MA Plot showing expression changes">
+            <div class="figure-caption">
+                Figure 1: MA Plot (Mean-Average plot) showing gene expression changes between deceased and surviving patients. 
+                The x-axis shows the average expression level of each gene across all samples (log10 scale). 
+                The y-axis shows the fold change between conditions (log2 scale), where positive values indicate higher expression 
+                in deceased patients and negative values indicate higher expression in surviving patients. 
+                Red points indicate statistically significant changes (adjusted p-value < 0.05).
+            </div>
+        </div>
+
+        <div class="figure">
+            <img src="results/figures/enhanced_volcano.png" alt="Volcano plot of differential expression">
+            <div class="figure-caption">
+                Figure 2: Volcano plot highlighting significantly differentially expressed genes between 
+                deceased and surviving patients. Key genes are labeled.
+            </div>
+        </div>
+
+        <h3>2. Top Differentially Expressed Genes</h3>
+        <div class="figure">
+            <img src="results/figures/enhanced_heatmap.png" alt="Heatmap of top differential genes">
+            <div class="figure-caption">
+                Figure 3: Hierarchical clustering of the top 30 differentially expressed genes, 
+                showing distinct expression patterns between survival groups.
+            </div>
+        </div>
+
+        <div class="figure">
+            <img src="results/figures/top_genes_boxplot.png" alt="Expression of top genes">
+            <div class="figure-caption">
+                Figure 4: Expression distribution of the top 6 differentially expressed genes 
+                across survival groups.
+            </div>
+        </div>
+
+        <h3>3. Pathway Analysis</h3>
+        <div class="figure">
+            <img src="results/figures/enrichment_dotplot.png" alt="GO enrichment analysis">
+            <div class="figure-caption">
+                Figure 5: Gene Ontology enrichment analysis showing the top enriched biological processes.
+            </div>
+        </div>
+    </section>
+
+    <section id="key-findings">
+        <h2>Key Findings</h2>
+        
+        <div class="key-finding">
+            <h3>Notable Genes:</h3>
+            <ul>
+                <li><strong>TMEM132B</strong> (log2FC = -5.705): Most significantly downregulated in deceased patients</li>
+                <li><strong>Immunoglobulin Genes</strong> (IGKV4-1, IGLC5, IGKV1D-16): Downregulated in deceased patients</li>
+                <li><strong>TUBB2B</strong>: Cytoskeletal component with potential role in disease progression</li>
+                <li><strong>NRG3</strong>: Signaling molecule with possible implications in survival</li>
+            </ul>
+        </div>
+    </section>
+
+    <section id="discussion">
+        <h2>Discussion</h2>
+        
+        <h3>Biological Implications</h3>
+        <p>The differential expression analysis revealed several key patterns:</p>
+        <ul>
+            <li>Downregulation of immunoglobulin genes in deceased patients suggests potential immune system dysfunction</li>
+            <li>Changes in structural proteins (TUBB2B) might indicate altered cellular architecture</li>
+            <li>Signaling pathway alterations (NRG3) suggest potential therapeutic targets</li>
+        </ul>
+
+        <h3>Clinical Relevance</h3>
+        <p>These findings have several potential clinical applications:</p>
+        <ul>
+            <li>Development of prognostic markers</li>
+            <li>Identification of potential therapeutic targets</li>
+            <li>Better understanding of DLBCL progression mechanisms</li>
+        </ul>
+    </section>
+
+    <section id="conclusion">
+        <h2>Conclusion</h2>
+        <p>This analysis provides insights into the molecular basis of DLBCL survival outcomes and identifies several promising avenues for future research. The identified genes and pathways could serve as potential prognostic markers or therapeutic targets.</p>
+    </section>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
