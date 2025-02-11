@@ -37,7 +37,7 @@ dlbcl-analysis/
 ## Installation
 1. Clone this repository:
 ```bash
-git clone https://github.com/yourusername/dlbcl-analysis.git
+git clone https://github.com/klundquist/dlbcl-analysis.git
 cd dlbcl-analysis
 ```
 
