@@ -80,7 +80,7 @@ The analysis identifies:
 - Key pathways associated with survival outcomes
 - Potential prognostic markers
 
-View the complete analysis and results in `docs/index.html`
+View the complete analysis and results in `project-writeup.html`
 
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
