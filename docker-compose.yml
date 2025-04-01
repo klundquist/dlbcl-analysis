@@ -1,0 +1,17 @@
+version: '3'
+
+services:
+  r-analysis:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: dlbcl-analysis
+    container_name: dlbcl-analysis
+    volumes:
+      - ./:/project
+    working_dir: /project
+    # Use interactive mode to keep the container running
+    stdin_open: true
+    tty: true
+    # Start R directly
+    command: R --quiet --no-save

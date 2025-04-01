@@ -1,31 +1,48 @@
 # Setup and data acquisition script for lymphoma analysis project
 
-# Install and load required packages
-if (!requireNamespace("BiocManager", quietly = TRUE)) {
-  install.packages("BiocManager")
-}
-
+# Check for packages and suggest using package_reinstall.R if missing
 required_packages <- c(
   "TCGAbiolinks",
-  "DESeq2",
-  "edgeR",
-  "pheatmap",
-  "EnhancedVolcano",
+  "DESeq2", 
+  "tidyverse",
   "SummarizedExperiment"
 )
 
-for (pkg in required_packages) {
-  if (!requireNamespace(pkg, quietly = TRUE)) {
-    BiocManager::install(pkg)
-  }
+missing_packages <- required_packages[!sapply(required_packages, requireNamespace, quietly = TRUE)]
+
+if (length(missing_packages) > 0) {
+  stop(paste0(
+    "The following required packages are missing: ", 
+    paste(missing_packages, collapse = ", "), 
+    "\nPlease run the package installation script first: source('scripts/package_reinstall.R')"
+  ))
 }
 
-# Load required libraries
-library(TCGAbiolinks)
-library(DESeq2)
-library(edgeR)
-library(tidyverse)
-library(SummarizedExperiment)
+# Load required libraries with error handling
+load_package <- function(pkg_name) {
+  tryCatch({
+    library(pkg_name, character.only = TRUE)
+    message(paste0("Loaded package: ", pkg_name))
+    return(TRUE)
+  }, error = function(e) {
+    message(paste0("Failed to load package: ", pkg_name, " - ", e$message))
+    return(FALSE)
+  })
+}
+
+# Load core packages
+core_packages <- c("TCGAbiolinks", "tidyverse", "SummarizedExperiment")
+core_loaded <- sapply(core_packages, load_package)
+
+if (!all(core_loaded)) {
+  stop("Failed to load core packages. Please check the installation.")
+}
+
+# Try to load DESeq2 (needed for later steps)
+deseq_loaded <- load_package("DESeq2")
+if (!deseq_loaded) {
+  warning("DESeq2 could not be loaded. Some analysis steps may fail.")
+}
 
 # Create project directory structure
 dirs <- c("data/raw", 
@@ -119,42 +136,86 @@ create_sample_metadata <- function(data) {
   return(sample_metadata)
 }
 
-# Main processing function
+# Main processing function with fallback options
 main_processing <- function(counts_matrix, sample_metadata) {
   message("Running main processing...")
   
-  # Create DESeq2 object
-  dds <- DESeqDataSetFromMatrix(
-    countData = counts_matrix,
-    colData = sample_metadata,
-    design = ~stage
-  )
+  # Check if DESeq2 is available for normalization
+  if (requireNamespace("DESeq2", quietly = TRUE)) {
+    message("Using DESeq2 for normalization...")
+    
+    # Create DESeq2 object
+    tryCatch({
+      dds <- DESeq2::DESeqDataSetFromMatrix(
+        countData = counts_matrix,
+        colData = sample_metadata,
+        design = ~stage
+      )
+      
+      # Filter low count genes
+      keep <- rowSums(counts(dds)) >= 10
+      dds <- dds[keep,]
+      
+      # Normalize counts
+      dds <- DESeq2::estimateSizeFactors(dds)
+      normalized_counts <- DESeq2::counts(dds, normalized=TRUE)
+      
+      # Save processed data
+      saveRDS(dds, "data/processed/deseq2_object.rds")
+      
+      result_object <- list(
+        dds = dds,
+        normalized_counts = normalized_counts
+      )
+    }, error = function(e) {
+      message("Error in DESeq2 processing: ", e$message)
+      message("Falling back to simple normalization...")
+      
+      # Fallback to simple normalization if DESeq2 fails
+      result_object <- fallback_normalization(counts_matrix, sample_metadata)
+    })
+  } else {
+    message("DESeq2 not available, using fallback normalization...")
+    result_object <- fallback_normalization(counts_matrix, sample_metadata)
+  }
   
-  # Filter low count genes
-  keep <- rowSums(counts(dds)) >= 10
-  dds <- dds[keep,]
+  # Get normalized counts from whichever method succeeded
+  normalized_counts <- result_object$normalized_counts
   
-  # Normalize counts
-  dds <- estimateSizeFactors(dds)
-  normalized_counts <- counts(dds, normalized=TRUE)
-  
-  # Save processed data
-  saveRDS(dds, "data/processed/deseq2_object.rds")
+  # Save normalized counts
   write.csv(normalized_counts, "results/tables/normalized_counts.csv")
   
   # Save summary statistics
   summary_stats <- data.frame(
     total_genes = nrow(counts_matrix),
-    filtered_genes = nrow(dds),
-    samples = ncol(dds),
-    tumor_samples = sum(sample_metadata$condition == "Tumor"),
-    normal_samples = sum(sample_metadata$condition == "Normal")
+    filtered_genes = nrow(normalized_counts),
+    samples = ncol(normalized_counts),
+    tumor_samples = sum(sample_metadata$sample_type == "Primary Tumor", na.rm = TRUE),
+    normal_samples = sum(sample_metadata$sample_type == "Solid Tissue Normal", na.rm = TRUE)
   )
   write.csv(summary_stats, "results/tables/summary_statistics.csv")
   
   message("Processing complete. Data saved in data/processed/ and results/")
+  return(result_object)
+}
+
+# Fallback normalization when DESeq2 is not available
+fallback_normalization <- function(counts_matrix, sample_metadata) {
+  message("Performing simple CPM normalization...")
+  
+  # Filter low count genes
+  keep <- rowSums(counts_matrix) >= 10
+  filtered_counts <- counts_matrix[keep,]
+  
+  # Simple CPM normalization
+  lib_sizes <- colSums(filtered_counts)
+  norm_factors <- lib_sizes / mean(lib_sizes)
+  normalized_counts <- t(t(filtered_counts) / norm_factors) * 1e6
+  
+  message("Simple normalization complete")
+  
+  # Return results
   return(list(
-    dds = dds,
     normalized_counts = normalized_counts
   ))
 }

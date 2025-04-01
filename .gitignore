@@ -1,3 +1,28 @@
-data/raw/*
-*.rds
+# R specific
+.Rproj.user
 .Rhistory
+.RData
+.Ruserdata
+*.Rproj
+
+# Large data files
+data/raw/*
+data/processed/*.csv
+results/tables/*.csv
+*.rds
+
+# System files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Temporary files
+*.tmp
+*.temp
+tmp/
+temp/
+
+# Logs
+*.log
+logs/
